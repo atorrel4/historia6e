@@ -1,0 +1,283 @@
+
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Repte dels Celtes</title>
+<style>
+body{
+margin:0;
+font-family:Arial,sans-serif;
+background:linear-gradient(135deg,#2f855a,#68d391);
+display:flex;
+justify-content:center;
+align-items:center;
+min-height:100vh;
+}
+#game{
+width:92%;
+max-width:950px;
+background:white;
+border-radius:24px;
+padding:28px;
+box-shadow:0 12px 30px rgba(0,0,0,.35);
+}
+h1{text-align:center;color:#22543d;}
+#top{
+display:flex;
+justify-content:space-between;
+font-size:20px;
+font-weight:bold;
+flex-wrap:wrap;
+}
+#progress{
+height:14px;
+background:#eee;
+border-radius:999px;
+overflow:hidden;
+margin:18px 0;
+}
+#bar{
+height:100%;
+width:0%;
+background:#16a34a;
+transition:.3s;
+}
+button{
+width:100%;
+padding:14px;
+margin:8px 0;
+border:none;
+border-radius:14px;
+font-size:20px;
+cursor:pointer;
+background:#f3f4f6;
+transition:.2s;
+}
+button:hover{transform:scale(1.02);}
+.correct{background:#16a34a;color:white;}
+.wrong{background:#dc2626;color:white;}
+#badge{font-size:70px;}
+.small{text-align:center;color:#666;}
+</style>
+</head>
+
+<body>
+
+<div id="game">
+
+<div id="start">
+<h1>🛡️ Repte dels Celtes</h1>
+<p class="small">20 preguntes · Cronòmetre · Respostes aleatòries</p>
+<button onclick="startGame()">🚀 Comencem!</button>
+</div>
+
+<div id="quiz" style="display:none;">
+
+<div id="top">
+<div id="score">⭐ 0 punts</div>
+<div id="timer">⏱️ 20</div>
+</div>
+
+<div id="progress">
+<div id="bar"></div>
+</div>
+
+<h2 id="question"></h2>
+
+<div id="answers"></div>
+
+</div>
+
+<div id="end" style="display:none;text-align:center;">
+
+<div id="badge"></div>
+
+<h1 id="title"></h1>
+
+<h2 id="finalScore"></h2>
+
+<p id="summary"></p>
+
+<button onclick="location.reload()">🔁 Tornar a jugar</button>
+
+</div>
+
+</div>
+
+<script>
+
+const questions=[
+
+{q:"En quina part de la Península vivien principalment els celtes?",c:"Al nord i a l'oest",w:["A la costa mediterrània","Al sud-est","A les illes Balears"]},
+
+{q:"Com s'anomenaven els seus poblats fortificats?",c:"Castres",w:["Polis","Ziggurats","Viles"]},
+
+{q:"On construïen sovint els castres?",c:"Dalt dels turons",w:["A la platja","Al desert","Dins dels rius"]},
+
+{q:"Quina forma tenien moltes cases?",c:"Circular",w:["Rectangular","Triangular","Quadrada"]},
+
+{q:"De quin material eren moltes parets?",c:"Pedra",w:["Vidre","Marbre","Ferro"]},
+
+{q:"De què estava feta sovint la teulada?",c:"Palla",w:["Rajoles","Coure","Pedra"]},
+
+{q:"Quina era una activitat molt important?",c:"La ramaderia",w:["La navegació","La pesca","La impremta"]},
+
+{q:"Quins animals criaven habitualment?",c:"Vaques, ovelles i porcs",w:["Camells","Elefants","Cocodrils"]},
+
+{q:"Quin cereal cultivaven?",c:"Blat",w:["Arròs","Cacau","Cotó"]},
+
+{q:"Quin metall treballaven molt bé?",c:"El ferro",w:["Alumini","Vidre","Plàstic"]},
+
+{q:"Quina activitat consistia a fabricar armes i eines?",c:"La metal·lúrgia",w:["La pintura","La música","L'escriptura"]},
+
+{q:"Els celtes feien servir moneda pròpia?",c:"No sempre",w:["Sempre","Mai comerciaven","Només d'or"]},
+
+{q:"Amb qui comerciaven?",c:"Amb altres pobles",w:["Només entre ells","Amb els asteques","Amb els víkings"]},
+
+{q:"Qui dirigia les tribus?",c:"Els caps guerrers",w:["Els faraons","Els cònsols","Els emperadors"]},
+
+{q:"Qui eren els druides?",c:"Els sacerdots",w:["Els reis","Els pagesos","Els artesans"]},
+
+{q:"Els celtes eren...",c:"Politeistes",w:["Monoteistes","Sense religió","Ateus"]},
+
+{q:"Què era molt important per als celtes?",c:"La natura",w:["Els gratacels","Les piràmides","Els vaixells de vapor"]},
+
+{q:"Quina arma era habitual entre els guerrers?",c:"L'espasa",w:["La pistola","El canó","El fusell"]},
+
+{q:"Per què construïen muralles als castres?",c:"Per defensar-se",w:["Per decorar","Per guardar cereals","Per fer mercats"]},
+
+{q:"Quina característica destacava dels celtes?",c:"Vivien en tribus i castres fortificats",w:["Vivien en piràmides","Vivien en palaus romans","Vivien sota terra"]}
+
+];
+
+function shuffle(a){
+a=[...a];
+for(let i=a.length-1;i>0;i--){
+const j=Math.floor(Math.random()*(i+1));
+[a[i],a[j]]=[a[j],a[i]];
+}
+return a;
+}
+
+let ordre=shuffle(questions);
+let i=0;
+let punts=0;
+let encerts=0;
+let temps=20;
+let interval;
+
+function startGame(){
+document.getElementById("start").style.display="none";
+document.getElementById("quiz").style.display="block";
+seguent();
+}
+
+function seguent(){
+
+if(i>=ordre.length){
+finalJoc();
+return;
+}
+
+document.getElementById("bar").style.width=(i/ordre.length*100)+"%";
+document.getElementById("question").innerHTML=(i+1)+"/20 · "+ordre[i].q;
+document.getElementById("score").innerHTML="⭐ "+punts+" punts";
+
+temps=20;
+document.getElementById("timer").innerHTML="⏱️ "+temps;
+
+clearInterval(interval);
+
+interval=setInterval(()=>{
+temps--;
+document.getElementById("timer").innerHTML="⏱️ "+temps;
+
+if(temps<=0){
+clearInterval(interval);
+i++;
+seguent();
+}
+},1000);
+
+const caixa=document.getElementById("answers");
+caixa.innerHTML="";
+
+shuffle([ordre[i].c,...ordre[i].w]).forEach(txt=>{
+
+const b=document.createElement("button");
+b.innerHTML=txt;
+
+b.onclick=()=>resposta(txt,b);
+
+caixa.appendChild(b);
+
+});
+
+}
+
+function resposta(txt,b){
+
+clearInterval(interval);
+
+const botons=[...document.querySelectorAll("#answers button")];
+
+botons.forEach(x=>{
+x.disabled=true;
+if(x.innerHTML===ordre[i].c)x.classList.add("correct");
+});
+
+if(txt===ordre[i].c){
+
+punts+=100+temps*5;
+encerts++;
+
+}else{
+
+b.classList.add("wrong");
+
+}
+
+setTimeout(()=>{
+i++;
+seguent();
+},1200);
+
+}
+
+function finalJoc(){
+
+document.getElementById("quiz").style.display="none";
+document.getElementById("end").style.display="block";
+
+let medalla="⭐";
+let titol="Aprenent Celta";
+
+if(encerts==20){
+medalla="🏆";
+titol="Gran Druida";
+}
+else if(encerts>=17){
+medalla="🥇";
+titol="Cap Guerrer";
+}
+else if(encerts>=13){
+medalla="🥈";
+titol="Guerrer Celta";
+}
+else if(encerts>=9){
+medalla="🥉";
+titol="Habitant d'un Castre";
+}
+
+document.getElementById("badge").innerHTML=medalla;
+document.getElementById("title").innerHTML=titol;
+document.getElementById("finalScore").innerHTML=encerts+"/20 preguntes · "+punts+" punts";
+document.getElementById("summary").innerHTML="Heu completat el Repte dels Celtes!";
+}
+
+</script>
+
+</body>
+</html>
