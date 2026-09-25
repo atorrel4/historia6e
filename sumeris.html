@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Repte dels Sumeris</title>
+
+<style>
+body{
+margin:0;
+font-family:Arial,sans-serif;
+background:linear-gradient(135deg,#8B5E3C,#D9A441);
+display:flex;
+justify-content:center;
+align-items:center;
+min-height:100vh;
+}
+
+#game{
+width:92%;
+max-width:950px;
+background:white;
+border-radius:24px;
+padding:28px;
+box-shadow:0 12px 30px rgba(0,0,0,.35);
+}
+
+h1{text-align:center;color:#6b3e1f;}
+
+#top{
+display:flex;
+justify-content:space-between;
+font-size:20px;
+font-weight:bold;
+flex-wrap:wrap;
+}
+
+#progress{
+height:14px;
+background:#eee;
+border-radius:999px;
+overflow:hidden;
+margin:18px 0;
+}
+
+#bar{
+height:100%;
+width:0%;
+background:#16a34a;
+transition:.3s;
+}
+
+button{
+width:100%;
+padding:14px;
+margin:8px 0;
+border:none;
+border-radius:14px;
+font-size:20px;
+cursor:pointer;
+background:#f3f4f6;
+transition:.2s;
+}
+
+button:hover{transform:scale(1.02);}
+
+.correct{background:#16a34a;color:white;}
+.wrong{background:#dc2626;color:white;}
+
+#badge{font-size:70px;}
+.small{text-align:center;color:#666;}
+</style>
+
+</head>
+<body>
+
+<div id="game">
+
+<div id="start">
+<h1>🏺 Repte dels Sumeris</h1>
+<p class="small">Pàgines 5-7 · 15 preguntes</p>
+<button onclick="startGame()">🚀 Comencem!</button>
+</div>
+
+<div id="quiz" style="display:none;">
+
+<div id="top">
+<div id="score">⭐ 0 punts</div>
+<div id="timer">⏱️ 20</div>
+</div>
+
+<div id="progress">
+<div id="bar"></div>
+</div>
+
+<h2 id="question"></h2>
+
+<div id="answers"></div>
+
+</div>
+
+<div id="end" style="display:none;text-align:center;">
+
+<div id="badge"></div>
+
+<h1 id="title"></h1>
+
+<h2 id="finalScore"></h2>
+
+<p id="summary"></p>
+
+<button onclick="location.reload()">🔁 Tornar a jugar</button>
+
+</div>
+
+</div>
+
+<script>
+
+const questions=[
+
+{q:"Entre quins rius va aparèixer la civilització sumèria?",c:"Èufrates i Tigris",w:["Nil i Jordà","Danubi i Rin","Ebre i Tajo"]},
+
+{q:"En quin territori actual es trobava Sumer?",c:"L'actual Iraq",w:["Egipte","Grècia","Turquia"]},
+
+{q:"Quin gran invent va fer destacar els sumeris?",c:"L'escriptura cuneïforme",w:["La impremta","La brúixola","El paper"]},
+
+{q:"Com s'anomenava el gran temple en forma de piràmide escalonada?",c:"Ziggurat",w:["Piràmide","Coliseu","Acròpolis"]},
+
+{q:"Al principi, les ciutats sumèries estaven envoltades de muralles?",c:"No",w:["Sí","Només algunes","Només els temples"]},
+
+{q:"Per què van començar a construir muralles?",c:"Per l'augment dels conflictes",w:["Per decorar","Per guardar cereals","Per fer mercats"]},
+
+{q:"Qui governava una ciutat-estat?",c:"El Lugal o l'Ensi",w:["El faraó","L'emperador","El cònsol"]},
+
+{q:"Qui ocupava el primer lloc de la piràmide social?",c:"El rei",w:["Els comerciants","Els pagesos","Els esclaus"]},
+
+{q:"Quin grup era a la part més baixa de la societat?",c:"Els esclaus",w:["Els sacerdots","Els artesans","Els funcionaris"]},
+
+{q:"De què vivien principalment els sumeris?",c:"De l'agricultura i la ramaderia",w:["Només de la pesca","Només del comerç","Només de la caça"]},
+
+{q:"Què construïen per portar l'aigua fins als camps?",c:"Canals i preses",w:["Ponts","Torres","Muralles"]},
+
+{q:"Quin invent servia per fabricar ceràmica?",c:"El torn",w:["La roda hidràulica","El martell","El molí"]},
+
+{q:"Quina eina facilitava la feina al camp?",c:"L'arada",w:["L'espasa","La pala mecànica","La destral"]},
+
+{q:"Sobre què escrivien els primers textos?",c:"Tauletes d'argila",w:["Paper","Pergamí","Fusta"]},
+
+{q:"Què vol dir que els sumeris eren politeistes?",c:"Creien en diversos déus",w:["Creien en un sol déu","No tenien religió","Només adoraven el rei"]}
+
+];
+
+function shuffle(a){
+a=[...a];
+for(let i=a.length-1;i>0;i--){
+const j=Math.floor(Math.random()*(i+1));
+[a[i],a[j]]=[a[j],a[i]];
+}
+return a;
+}
+
+let ordre=shuffle(questions);
+let i=0;
+let punts=0;
+let encerts=0;
+let temps=20;
+let interval;
+
+function startGame(){
+document.getElementById("start").style.display="none";
+document.getElementById("quiz").style.display="block";
+seguent();
+}
+
+function seguent(){
+
+if(i>=ordre.length){
+finalJoc();
+return;
+}
+
+document.getElementById("bar").style.width=(i/ordre.length*100)+"%";
+document.getElementById("question").innerHTML=(i+1)+"/15 · "+ordre[i].q;
+document.getElementById("score").innerHTML="⭐ "+punts+" punts";
+
+temps=20;
+document.getElementById("timer").innerHTML="⏱️ "+temps;
+
+clearInterval(interval);
+
+interval=setInterval(()=>{
+temps--;
+document.getElementById("timer").innerHTML="⏱️ "+temps;
+
+if(temps<=0){
+clearInterval(interval);
+i++;
+seguent();
+}
+},1000);
+
+const caixa=document.getElementById("answers");
+caixa.innerHTML="";
+
+shuffle([ordre[i].c,...ordre[i].w]).forEach(txt=>{
+
+const b=document.createElement("button");
+b.innerHTML=txt;
+
+b.onclick=()=>resposta(txt,b);
+
+caixa.appendChild(b);
+
+});
+
+}
+
+function resposta(txt,b){
+
+clearInterval(interval);
+
+const botons=[...document.querySelectorAll("#answers button")];
+
+botons.forEach(x=>{
+x.disabled=true;
+if(x.innerHTML===ordre[i].c)x.classList.add("correct");
+});
+
+if(txt===ordre[i].c){
+
+punts+=100+temps*5;
+encerts++;
+
+}else{
+
+b.classList.add("wrong");
+
+}
+
+setTimeout(()=>{
+i++;
+seguent();
+},1200);
+
+}
+
+function finalJoc(){
+
+document.getElementById("quiz").style.display="none";
+document.getElementById("end").style.display="block";
+
+let medalla="⭐";
+let titol="Aprenent de Sumer";
+
+if(encerts==15){
+medalla="🏆";
+titol="Mestre de Sumer";
+}
+else if(encerts>=13){
+medalla="🥇";
+titol="Gran Sacerdot";
+}
+else if(encerts>=10){
+medalla="🥈";
+titol="Explorador del Ziggurat";
+}
+else if(encerts>=7){
+medalla="🥉";
+titol="Habitant de Sumer";
+}
+
+document.getElementById("badge").innerHTML=medalla;
+document.getElementById("title").innerHTML=titol;
+document.getElementById("finalScore").innerHTML=encerts+"/15 preguntes · "+punts+" punts";
+document.getElementById("summary").innerHTML="Has superat el Repte dels Sumeris!";
+}
+
+</script>
+
+</body>
+</html>
