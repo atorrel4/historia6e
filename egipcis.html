@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Repte dels Egipcis</title>
+
+<style>
+*{box-sizing:border-box}
+
+body{
+margin:0;
+font-family:Arial,sans-serif;
+background:linear-gradient(180deg,#F7D26A,#D9A441,#8B5A2B);
+min-height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+}
+
+#game{
+width:95%;
+max-width:900px;
+background:white;
+border-radius:25px;
+padding:25px;
+box-shadow:0 15px 35px rgba(0,0,0,.35);
+}
+
+h1{
+text-align:center;
+color:#7A4A0A;
+font-size:42px;
+margin-bottom:10px;
+}
+
+.small{
+text-align:center;
+color:#666;
+}
+
+#top{
+display:flex;
+justify-content:space-between;
+font-size:22px;
+font-weight:bold;
+margin-bottom:15px;
+}
+
+#progress{
+height:15px;
+background:#eee;
+border-radius:20px;
+overflow:hidden;
+margin-bottom:20px;
+}
+
+#bar{
+height:100%;
+width:0%;
+background:#16a34a;
+transition:.4s;
+}
+
+button{
+width:100%;
+padding:16px;
+margin:8px 0;
+border:none;
+border-radius:15px;
+font-size:20px;
+cursor:pointer;
+background:#F4F4F4;
+transition:.2s;
+}
+
+button:hover{
+transform:scale(1.02);
+background:#FFF2CC;
+}
+
+.correct{background:#16a34a;color:white;}
+.wrong{background:#dc2626;color:white;}
+
+#badge{
+font-size:80px;
+}
+
+.menuBtn{
+background:#7A4A0A;
+color:white;
+}
+
+.menuBtn:hover{
+background:#5a3307;
+}
+</style>
+
+</head>
+<body>
+
+<div id="game">
+
+<div id="start">
+
+<h1>🔺 Repte dels Egipcis</h1>
+
+<p class="small">
+20 preguntes • Cronòmetre • Puntuació • Respostes aleatòries
+</p>
+
+<button onclick="startGame()">🚀 Comencem!</button>
+
+</div>
+
+<div id="quiz" style="display:none">
+
+<div id="top">
+<div id="score">⭐ 0</div>
+<div id="timer">⏱️20</div>
+</div>
+
+<div id="progress">
+<div id="bar"></div>
+</div>
+
+<h2 id="question"></h2>
+
+<div id="answers"></div>
+
+</div>
+
+<div id="end" style="display:none;text-align:center">
+
+<div id="badge"></div>
+
+<h1 id="title"></h1>
+
+<h2 id="finalScore"></h2>
+
+<p id="summary"></p>
+
+<button onclick="location.reload()">🔁 Tornar a jugar</button>
+
+<button class="menuBtn" onclick="window.location='index.html'">
+🏺 Tornar al menú
+</button>
+
+</div>
+
+</div>
+
+<script>
+
+const questions=[
+
+{q:"Al voltant de quin riu va créixer l'antic Egipte?",c:"El Nil",w:["L'Èufrates","El Tigris","L'Ebre"]},
+
+{q:"En quin continent es troba Egipte?",c:"Àfrica",w:["Europa","Àsia","Amèrica"]},
+
+{q:"Qui governava Egipte?",c:"El faraó",w:["El cònsol","L'emperador","El Lugal"]},
+
+{q:"Quina feina feia la majoria dels egipcis?",c:"Pagesos",w:["Mariners","Soldats","Escribes"]},
+
+{q:"De què estaven fetes moltes cases?",c:"De tova",w:["Marbre","Vidre","Fusta"]},
+
+{q:"Quin aliment menjaven gairebé cada dia?",c:"Pa",w:["Arròs","Formatge","Carn"]},
+
+{q:"Quina beguda era molt habitual?",c:"Cervesa",w:["Vi","Llet","Suc"]},
+
+{q:"Per a què servien les piràmides?",c:"Com a tombes dels faraons",w:["Com a escoles","Com a mercats","Com a teatres"]},
+
+{q:"Què és una mòmia?",c:"Un cos conservat després de la mort",w:["Un sacerdot","Un escriba","Un faraó viu"]},
+
+{q:"Com s'anomenava l'escriptura egípcia?",c:"Jeroglífica",w:["Cuneïforme","Llatina","Grega"]},
+
+{q:"Sobre què escrivien sovint?",c:"Papir",w:["Argila","Paper","Pergamí"]},
+
+{q:"Els egipcis eren...",c:"Politeistes",w:["Monoteistes","Sense religió","Ateus"]},
+
+{q:"Quin déu tenia cap de xacal?",c:"Anubis",w:["Ra","Horus","Isis"]},
+
+{q:"Quin déu representava el Sol?",c:"Ra",w:["Anubis","Horus","Osiris"]},
+
+{q:"Quin déu tenia cap de falcó?",c:"Horus",w:["Ra","Anubis","Set"]},
+
+{q:"Qui ocupava el lloc més alt de la societat?",c:"El faraó",w:["Els artesans","Els pagesos","Els esclaus"]},
+
+{q:"Quin edifici tenia una funció religiosa?",c:"El temple",w:["El mercat","El port","La muralla"]},
+
+{q:"On es construïen moltes tombes importants?",c:"Al desert",w:["Al costat del mar","Dins dels rius","A la muntanya"]},
+
+{q:"Per què era tan important el Nil?",c:"Perquè permetia cultivar",w:["Perquè tenia or","Perquè era molt profund","Perquè separava ciutats"]},
+
+{q:"Què va fer famosa la civilització egípcia?",c:"Les piràmides, les mòmies i els jeroglífics",w:["Els castells","Els gladiadors","Els ziggurats"]}
+
+];
+
+function shuffle(a){
+a=[...a];
+for(let i=a.length-1;i>0;i--){
+let j=Math.floor(Math.random()*(i+1));
+[a[i],a[j]]=[a[j],a[i]];
+}
+return a;
+}
+
+let ordre=shuffle(questions);
+let i=0;
+let punts=0;
+let encerts=0;
+let temps=20;
+let interval;
+
+function startGame(){
+start.style.display="none";
+quiz.style.display="block";
+seguent();
+}
+
+function seguent(){
+
+if(i>=ordre.length){
+finalJoc();
+return;
+}
+
+bar.style.width=(i/ordre.length*100)+"%";
+
+question.innerHTML=(i+1)+"/20 · "+ordre[i].q;
+
+score.innerHTML="⭐ "+punts;
+
+temps=20;
+timer.innerHTML="⏱️"+temps;
+
+clearInterval(interval);
+
+interval=setInterval(()=>{
+
+temps--;
+timer.innerHTML="⏱️"+temps;
+
+if(temps<=0){
+clearInterval(interval);
+i++;
+seguent();
+}
+
+},1000);
+
+answers.innerHTML="";
+
+shuffle([ordre[i].c,...ordre[i].w]).forEach(txt=>{
+
+const b=document.createElement("button");
+
+b.innerHTML=txt;
+
+b.onclick=()=>resposta(txt,b);
+
+answers.appendChild(b);
+
+});
+
+}
+
+function resposta(txt,b){
+
+clearInterval(interval);
+
+const botons=[...answers.children];
+
+botons.forEach(x=>{
+
+x.disabled=true;
+
+if(x.innerHTML===ordre[i].c)
+x.classList.add("correct");
+
+});
+
+if(txt===ordre[i].c){
+
+punts+=100+temps*5;
+encerts++;
+
+}else{
+
+b.classList.add("wrong");
+
+}
+
+setTimeout(()=>{
+i++;
+seguent();
+},1200);
+
+}
+
+function finalJoc(){
+
+quiz.style.display="none";
+end.style.display="block";
+
+let medalla="⭐";
+let titol="Habitant del Nil";
+
+if(encerts===20){
+medalla="🏆";
+titol="Faraó Suprem";
+}
+else if(encerts>=17){
+medalla="🥇";
+titol="Gran Escriba";
+}
+else if(encerts>=13){
+medalla="🥈";
+titol="Sacerdot del Nil";
+}
+else if(encerts>=9){
+medalla="🥉";
+titol="Aprenent Egipci";
+}
+
+badge.innerHTML=medalla;
+title.innerHTML=titol;
+finalScore.innerHTML=encerts+"/20 preguntes · "+punts+" punts";
+summary.innerHTML="Has completat el Repte dels Egipcis!";
+}
+
+</script>
+
+</body>
+</html>
