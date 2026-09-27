@@ -1,0 +1,219 @@
+
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Repte dels Grecs</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+margin:0;
+font-family:Arial,sans-serif;
+background:linear-gradient(180deg,#4A90E2,#87CEEB,#E8D8A8);
+display:flex;
+justify-content:center;
+align-items:center;
+min-height:100vh;
+}
+#game{
+width:95%;
+max-width:900px;
+background:white;
+border-radius:24px;
+padding:24px;
+box-shadow:0 15px 35px rgba(0,0,0,.35);
+}
+h1{text-align:center;color:#1E3A8A;font-size:42px}
+.small{text-align:center;color:#666}
+#top{display:flex;justify-content:space-between;font-size:22px;font-weight:bold}
+#progress{height:14px;background:#eee;border-radius:20px;overflow:hidden;margin:18px 0}
+#bar{height:100%;width:0;background:#22c55e;transition:.3s}
+button{
+width:100%;
+padding:15px;
+margin:8px 0;
+border:none;
+border-radius:14px;
+font-size:20px;
+cursor:pointer;
+background:#f3f4f6;
+transition:.2s;
+}
+button:hover{background:#E0F2FE;transform:scale(1.02)}
+.correct{background:#22c55e;color:white}
+.wrong{background:#dc2626;color:white}
+#badge{font-size:80px}
+.menu{background:#1E3A8A;color:white}
+.menu:hover{background:#162B66}
+</style>
+</head>
+
+<body>
+
+<div id="game">
+
+<div id="start">
+<h1>🏛️ Repte dels Grecs</h1>
+<p class="small">20 preguntes • Olimp • Polis • Democràcia</p>
+<button onclick="startGame()">⚡ Comença l'aventura</button>
+</div>
+
+<div id="quiz" style="display:none">
+<div id="top">
+<div id="score">⭐0</div>
+<div id="timer">⏱️20</div>
+</div>
+
+<div id="progress"><div id="bar"></div></div>
+
+<h2 id="question"></h2>
+<div id="answers"></div>
+</div>
+
+<div id="end" style="display:none;text-align:center">
+<div id="badge"></div>
+<h1 id="title"></h1>
+<h2 id="finalScore"></h2>
+<p id="summary"></p>
+
+<button onclick="location.reload()">🔁 Tornar a jugar</button>
+<button class="menu" onclick="window.location='index.html'">🏺 Tornar al menú</button>
+</div>
+
+</div>
+
+<script>
+
+const questions=[
+{q:"Com s'anomenaven les ciutats independents gregues?",c:"Polis",w:["Castres","Províncies","Imperis"]},
+{q:"Quina ciutat és famosa per la democràcia?",c:"Atenes",w:["Esparta","Roma","Troia"]},
+{q:"Quina ciutat destacava pels seus guerrers?",c:"Esparta",w:["Atenes","Corint","Milet"]},
+{q:"Què és la democràcia?",c:"Un sistema on els ciutadans participen en el govern",w:["Un rei mana sol","Un sacerdot decideix","Un emperador governa"]},
+{q:"On vivien els déus grecs?",c:"A l'Olimp",w:["Al Nil","Al desert","Al Partenó"]},
+{q:"Qui era el rei dels déus?",c:"Zeus",w:["Posidó","Ares","Hades"]},
+{q:"Qui era el déu del mar?",c:"Posidó",w:["Zeus","Hermes","Apolo"]},
+{q:"Qui era la deessa de la saviesa?",c:"Atena",w:["Afrodita","Artemisa","Hera"]},
+{q:"Quin edifici és el més famós d'Atenes?",c:"El Partenó",w:["El Coliseu","El Ziggurat","La Piràmide"]},
+{q:"On es celebraven els primers Jocs Olímpics?",c:"A Olímpia",w:["A Roma","A Esparta","A Creta"]},
+{q:"Cada quants anys es feien?",c:"Cada quatre anys",w:["Cada any","Cada dos anys","Cada deu anys"]},
+{q:"Quina disciplina practicaven els hoplites?",c:"La guerra",w:["La medicina","La música","La pintura"]},
+{q:"Què era una àgora?",c:"La plaça principal",w:["Un temple","Un vaixell","Un mercat de peix"]},
+{q:"Quin material utilitzaven molt en els temples?",c:"Marbre",w:["Gel","Fusta","Argila"]},
+{q:"Els grecs van crear moltes...",c:"Llegendes i mites",w:["Castells medievals","Piràmides","Muralles romanes"]},
+{q:"Qui era el missatger dels déus?",c:"Hermes",w:["Zeus","Hefest","Hades"]},
+{q:"Quina activitat agradava molt als grecs?",c:"El teatre",w:["La televisió","Els videojocs","El cinema"]},
+{q:"Com es deien els esportistes dels Jocs Olímpics?",c:"Atletes",w:["Gladiadors","Cavallers","Legionaris"]},
+{q:"Què feien els filòsofs?",c:"Pensaven i debatien idees",w:["Només cultivaven","Només lluitaven","Només navegaven"]},
+{q:"Quina civilització va influir molt en els romans?",c:"La grega",w:["La celta","La ibera","La sumèria"]}
+];
+
+function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a;}
+
+let order=shuffle(questions),i=0,p=0,ok=0,t=20,intv;
+
+function startGame(){
+start.style.display="none";
+quiz.style.display="block";
+nextQ();
+}
+
+function nextQ(){
+
+if(i>=order.length){finish();return;}
+
+bar.style.width=(i/order.length*100)+"%";
+
+question.innerHTML=(i+1)+"/20 · "+order[i].q;
+
+score.innerHTML="⭐ "+p;
+
+t=20;
+timer.innerHTML="⏱️"+t;
+
+clearInterval(intv);
+
+intv=setInterval(()=>{
+
+t--;
+
+timer.innerHTML="⏱️"+t;
+
+if(t<=0){
+clearInterval(intv);
+i++;
+nextQ();
+}
+
+},1000);
+
+answers.innerHTML="";
+
+shuffle([order[i].c,...order[i].w]).forEach(txt=>{
+
+const b=document.createElement("button");
+
+b.innerHTML=txt;
+
+b.onclick=()=>answer(txt,b);
+
+answers.appendChild(b);
+
+});
+
+}
+
+function answer(txt,b){
+
+clearInterval(intv);
+
+const bs=[...answers.children];
+
+bs.forEach(x=>{
+
+x.disabled=true;
+
+if(x.innerHTML===order[i].c)
+x.classList.add("correct");
+
+});
+
+if(txt===order[i].c){
+p+=100+t*5;
+ok++;
+}else{
+b.classList.add("wrong");
+}
+
+setTimeout(()=>{
+i++;
+nextQ();
+},1200);
+
+}
+
+function finish(){
+
+quiz.style.display="none";
+end.style.display="block";
+
+let badge="🥉";
+let titleText="Aprenent Grec";
+
+if(ok===20){badge="🏆";titleText="Heroi de l'Olimp";}
+else if(ok>=17){badge="🥇";titleText="Filòsof d'Or";}
+else if(ok>=13){badge="🥈";titleText="Hoplita";}
+else if(ok>=9){badge="🥉";titleText="Habitant d'Atenes";}
+
+badgeEl.innerHTML=badge;
+title.innerHTML=titleText;
+finalScore.innerHTML=ok+"/20 preguntes · "+p+" punts";
+summary.innerHTML="Has completat el Repte dels Grecs!";
+
+}
+
+</script>
+
+</body>
+</html>
